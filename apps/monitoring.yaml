@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: v61.5.0
+    targetRevision: 75.10.0
     helm:
       values: |
         alertmanager:
@@ -57,15 +57,13 @@ spec:
         prometheus-node-exporter:
           enabled: true
           hostRootfs: true
-          extraArgs:
-            - '--path.rootfs=/host'
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: monitoring
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
+destination:
+  server: https://kubernetes.default.svc
+  namespace: monitoring
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+  syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
