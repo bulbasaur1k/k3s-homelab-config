@@ -56,14 +56,44 @@ spec:
           enabled: false
         prometheus-node-exporter:
           enabled: true
-          hostRootfs: true
-destination:
-  server: https://kubernetes.default.svc
-  namespace: monitoring
-syncPolicy:
-  automated:
-    prune: true
-    selfHeal: true
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
+          hostRootfs: false
+
+          # Оставляем только три самых важных аргумента
+          extraArgs:
+            - '--path.rootfs=/host/root'
+            - '--path.procfs=/host/proc'
+            - '--path.sysfs=/host/sys'
+
+          # Оставляем только три самых важных монтирования
+          extraHostVolumeMounts:
+            - name: host-root
+              mountPath: /host/root
+              readOnly: true
+            - name: host-proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: host-sys
+              mountPath: /host/sys
+              readOnly: true
+
+          # Оставляем только три самых важных тома
+          extraHostVolumes:
+            - name: host-root
+              hostPath:
+                path: /
+            - name: host-proc
+              hostPath:
+                path: /proc
+            - name: host-sys
+              hostPath:
+                path: /sys
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
