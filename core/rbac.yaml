@@ -16,6 +16,28 @@ rules:
       - patch
       - delete
   - apiGroups:
+      - "traefik.io"
+      - "traefik.containo.us"
+    resources:
+      - "middlewares"
+      - "middlewaretcps"
+      - "ingressroutes"
+      - "traefikservices"
+      - "ingressroutetcps"
+      - "ingressrouteudps"
+      - "tlsoptions"
+      - "tlsstores"
+      - "serverstransports"
+      - "serverstransporttcps"
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
       - "*"
     resources:
       - "*"

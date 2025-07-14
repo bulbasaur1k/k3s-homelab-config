@@ -10,16 +10,10 @@ spec:
   source:
     repoURL: https://github.com/bulbasaur1k/k3s-homelab-config.git
     targetRevision: HEAD
-    # Указываем, что источником является Kustomize,
-    # который автоматически найдет все YAML во вложенных папках.
     path: .
     directory:
       recurse: true
 
-  # --- КЛЮЧЕВОЕ РЕШЕНИЕ ---
-  # Destination указывает, где ДОЛЖНЫ БЫТЬ СОЗДАНЫ дочерние приложения
-  # и куда по умолчанию применяются манифесты без неймспейса.
-  # Это правильное место для дочерних Application и ClusterRole.
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
