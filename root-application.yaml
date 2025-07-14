@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: root-app-of-apps
+  name: root
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -11,12 +11,12 @@ spec:
     repoURL: https://github.com/bulbasaur1k/k3s-homelab-config.git
     targetRevision: HEAD
     path: .
-    directory:
-      recurse: true
   destination:
+    namespace: default
     server: https://kubernetes.default.svc
-    namespace: argocd
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
