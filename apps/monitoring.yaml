@@ -13,12 +13,15 @@ spec:
     targetRevision: 75.10.0
     helm:
       values: |
+        # Alertmanager
         alertmanager:
           enabled: false
+
+        # Grafana настройки
         grafana:
           enabled: true
           replicas: 1
-          adminPassword: "admin"
+          adminPassword: "admin"  # Обязательно поменяйте!
           persistence:
             enabled: true
             storageClassName: local-path
@@ -28,10 +31,30 @@ spec:
             ingressClassName: traefik
             hosts:
               - grafana.gentoo.local
+            paths:
+              - /
+            pathType: Prefix
+          # Добавляем datasource для Loki (для будущего)
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              url: http://loki:3100
+              access: proxy
+              isDefault: false
+
+        # Prometheus настройки
         prometheus:
           enabled: true
           prometheusSpec:
             replicas: 1
+            retention: 30d
+            resources:
+              requests:
+                cpu: 200m
+                memory: 500Mi
+              limits:
+                cpu: 1
+                memory: 2Gi
             storageSpec:
               volumeClaimTemplate:
                 spec:
@@ -40,33 +63,45 @@ spec:
                   resources:
                     requests:
                       storage: 10Gi
+            # Важно для Argo CD
             ruleSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            probeSelectorNilUsesHelmValues: false
           ingress:
             enabled: true
             ingressClassName: traefik
             hosts:
               - prometheus.gentoo.local
-        kube-state-metrics:
+            paths:
+              - /
+            pathType: Prefix
+
+        # Node Exporter - правильная конфигурация
+        nodeExporter:
           enabled: true
+          # Для OpenRC систем может потребоваться
+          hostRootFsMount:
+            enabled: true
+            mountPropagation: HostToContainer
+
+        # Компоненты мастер-ноды (отключаем для k3s)
         kubeControllerManager:
           enabled: false
         kubeEtcd:
           enabled: false
         kubeScheduler:
           enabled: false
-        prometheus-node-exporter:
+        kubeProxy:
+          enabled: false
+
+        # Kube State Metrics
+        kube-state-metrics:
           enabled: true
-          hostRootfs: false
-          extraArgs:
-            - '--path.rootfs=/host/root'
-          extraHostVolumeMounts:
-            - name: host-root
-              mountPath: /host/root
-              readOnly: true
-          extraHostVolumes:
-            - name: host-root
-              hostPath:
-                path: /
+
+        # Отключаем некоторые ServiceMonitors для k3s
+        kubeApiServer:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
