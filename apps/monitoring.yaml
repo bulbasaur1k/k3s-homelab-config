@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 61.3.1
+    helm:
+      values: |
+        alertmanager:
+          enabled: false
+        grafana:
+          enabled: true
+          replicas: 1
+          adminPassword: "admin"
+          persistence:
+            enabled: true
+            storageClassName: local-path
+            size: 2Gi
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hosts:
+              - grafana.gentoo.local
+        prometheus:
+          enabled: true
+          prometheusSpec:
+            replicas: 1
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  storageClassName: local-path
+                  resources:
+                    requests:
+                      storage: 10Gi
+            ruleSelectorNilUsesHelmValues: false
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hosts:
+              - prometheus.gentoo.local
+        prometheus-node-exporter:
+          enabled: true
+          hostRootfs: false
+          extraArgs:
+            - '--path.rootfs=/host/root'
+          extraHostVolumeMounts:
+            - name: host-root
+              mountPath: /host/root
+              readOnly: true
+          extraHostVolumes:
+            - name: host-root
+              hostPath:
+                path: /
+        kube-state-metrics:
+          enabled: true
+        kubeControllerManager:
+          enabled: false
+        kubeEtcd:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
