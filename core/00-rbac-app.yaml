@@ -1,19 +1,20 @@
-# apps/00-rbac-app.yaml
+# apps/00-rbac-setup.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: rbac-setup
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-100" # Применяется первым
+    argocd.argoproj.io/sync-wave: "-10" # Применяется первым
 spec:
   project: default
   source:
-    repoURL: <ваш-git-repo>
+    repoURL: https://github.com/bulbasaur1k/k3s-homelab-config.git
     path: core
     targetRevision: HEAD
   destination:
     server: https://kubernetes.default.svc
+    # Указываем default, так как ресурсы (Namespace, ClusterRole) не принадлежат argocd
     namespace: default
   syncPolicy:
     automated:
