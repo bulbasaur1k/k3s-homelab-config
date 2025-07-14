@@ -10,7 +10,8 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 61.3.1
+    # <-- ИЗМЕНЕНИЕ: Самая последняя версия для совместимости с K8s v1.32
+    targetRevision: v61.5.0
     helm:
       values: |
         alertmanager:
@@ -54,11 +55,18 @@ spec:
           enabled: false
         kubeScheduler:
           enabled: false
-        # --- ИСПРАВЛЕННАЯ СЕКЦИЯ ДЛЯ NODE-EXPORTER ---
         prometheus-node-exporter:
           enabled: true
-          # Используем встроенный механизм чарта для монтирования ФС хоста
           hostRootfs: true
-          # Добавляем только аргумент, чтобы node-exporter знал, где искать ФС
           extraArgs:
-            - '--path.rootfs=/host' # <-- Обратите внимание, путь по умолчанию /host
+            - '--path.rootfs=/host'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
