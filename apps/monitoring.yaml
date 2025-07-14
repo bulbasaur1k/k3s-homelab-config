@@ -10,7 +10,6 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    # <-- ИЗМЕНЕНИЕ: Самая последняя версия для совместимости с K8s v1.32
     targetRevision: v61.5.0
     helm:
       values: |

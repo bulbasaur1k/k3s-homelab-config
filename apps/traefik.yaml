@@ -10,8 +10,7 @@ spec:
   source:
     repoURL: https://helm.traefik.io/traefik
     chart: traefik
-    # <-- ИЗМЕНЕНИЕ: Самая последняя версия для совместимости с K8s v1.32
-    targetRevision: v29.0.1
+    targetRevision: 75.10.0
     helm:
       values: |
         service:
