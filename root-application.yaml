@@ -10,10 +10,14 @@ spec:
   source:
     repoURL: https://github.com/bulbasaur1k/k3s-homelab-config.git
     targetRevision: HEAD
-    path: apps
+    # --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+    # Указываем, что нужно рекурсивно искать YAML во всем репозитории
+    path: .
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: default
   syncPolicy:
     automated:
       prune: true

@@ -46,19 +46,6 @@ spec:
             ingressClassName: traefik
             hosts:
               - prometheus.gentoo.local
-        prometheus-node-exporter:
-          enabled: true
-          hostRootfs: false
-          extraArgs:
-            - '--path.rootfs=/host/root'
-          extraHostVolumeMounts:
-            - name: host-root
-              mountPath: /host/root
-              readOnly: true
-          extraHostVolumes:
-            - name: host-root
-              hostPath:
-                path: /
         kube-state-metrics:
           enabled: true
         kubeControllerManager:
@@ -67,13 +54,11 @@ spec:
           enabled: false
         kubeScheduler:
           enabled: false
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: monitoring
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
+        # --- ИСПРАВЛЕННАЯ СЕКЦИЯ ДЛЯ NODE-EXPORTER ---
+        prometheus-node-exporter:
+          enabled: true
+          # Используем встроенный механизм чарта для монтирования ФС хоста
+          hostRootfs: true
+          # Добавляем только аргумент, чтобы node-exporter знал, где искать ФС
+          extraArgs:
+            - '--path.rootfs=/host' # <-- Обратите внимание, путь по умолчанию /host
