@@ -13,15 +13,26 @@ spec:
     targetRevision: 75.10.0
     helm:
       values: |
+        # --- Глобальные настройки для k3s ---
+        # Важно для RBAC в k3s!
+        global:
+          rbac:
+            createAggregateClusterRoles: false
+
+        # Укороченные имена для избежания проблем с длиной
+        fullnameOverride: "kps"
+
         # Alertmanager
         alertmanager:
           enabled: false
 
-        # Grafana настройки
+        # Grafana
         grafana:
           enabled: true
           replicas: 1
-          adminPassword: "admin"  # Обязательно поменяйте!
+          adminPassword: "admin"
+          rbac:
+            pspEnabled: false  # k3s не использует PSP
           persistence:
             enabled: true
             storageClassName: local-path
@@ -31,29 +42,22 @@ spec:
             ingressClassName: traefik
             hosts:
               - grafana.gentoo.local
-            paths:
-              - /
-            pathType: Prefix
-          # Добавляем datasource для Loki (для будущего)
-          additionalDataSources:
-            - name: Loki
-              type: loki
-              url: http://loki:3100
-              access: proxy
-              isDefault: false
 
-        # Prometheus настройки
+        # Prometheus
         prometheus:
           enabled: true
           prometheusSpec:
             replicas: 1
             retention: 30d
+            # Важные настройки для k3s
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            probeSelectorNilUsesHelmValues: false
             resources:
               requests:
-                cpu: 200m
                 memory: 500Mi
               limits:
-                cpu: 1
                 memory: 2Gi
             storageSpec:
               volumeClaimTemplate:
@@ -63,44 +67,47 @@ spec:
                   resources:
                     requests:
                       storage: 10Gi
-            # Важно для Argo CD
-            ruleSelectorNilUsesHelmValues: false
-            serviceMonitorSelectorNilUsesHelmValues: false
-            podMonitorSelectorNilUsesHelmValues: false
-            probeSelectorNilUsesHelmValues: false
           ingress:
             enabled: true
             ingressClassName: traefik
             hosts:
               - prometheus.gentoo.local
-            paths:
-              - /
-            pathType: Prefix
 
-        # Node Exporter - правильная конфигурация
-        nodeExporter:
-          enabled: true
-          # Для OpenRC систем может потребоваться
-          hostRootFsMount:
-            enabled: true
-            mountPropagation: HostToContainer
+        # Prometheus Operator
+        prometheusOperator:
+          admissionWebhooks:
+            enabled: false  # Отключаем для упрощения
+          tls:
+            enabled: false
 
-        # Компоненты мастер-ноды (отключаем для k3s)
-        kubeControllerManager:
+        # Node Exporter
+        prometheus-node-exporter:
+          fullnameOverride: "node-exporter"
+          prometheus:
+            monitor:
+              enabled: true
+
+        # Kube State Metrics
+        kube-state-metrics:
+          fullnameOverride: "ksm"
+          prometheus:
+            monitor:
+              enabled: true
+
+        # Отключаем компоненты control plane для k3s
+        kubeApiServer:
           enabled: false
-        kubeEtcd:
+        kubeControllerManager:
           enabled: false
         kubeScheduler:
           enabled: false
         kubeProxy:
           enabled: false
+        kubeEtcd:
+          enabled: false
 
-        # Kube State Metrics
-        kube-state-metrics:
-          enabled: true
-
-        # Отключаем некоторые ServiceMonitors для k3s
-        kubeApiServer:
+        # Отключаем CoreDNS monitoring (k3s использует свой)
+        coreDns:
           enabled: false
   destination:
     server: https://kubernetes.default.svc
@@ -112,3 +119,5 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - Replace=true # Важно для RBAC
+  revisionHistoryLimit: 3
