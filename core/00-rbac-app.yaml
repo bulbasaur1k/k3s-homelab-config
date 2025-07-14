@@ -1,0 +1,23 @@
+# apps/00-rbac-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rbac-setup
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-100" # Применяется первым
+spec:
+  project: default
+  source:
+    repoURL: <ваш-git-repo>
+    path: core
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

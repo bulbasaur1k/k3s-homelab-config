@@ -1,8 +1,11 @@
+# apps/monitoring.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: kube-prometheus-stack
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10" # Применяется после RBAC
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -12,89 +15,60 @@ spec:
     chart: kube-prometheus-stack
     targetRevision: 75.10.0
     helm:
+      # Добавьте skipCrds для первой установки
+      skipCrds: false
       values: |
-        # --- Глобальные настройки для k3s ---
-        # Важно для RBAC в k3s!
-        global:
-          rbac:
-            createAggregateClusterRoles: false
+        # Простая конфигурация для начала
+        defaultRules:
+          create: false  # Отключим правила для упрощения
 
-        # Укороченные имена для избежания проблем с длиной
-        fullnameOverride: "kps"
-
-        # Alertmanager
         alertmanager:
           enabled: false
 
-        # Grafana
         grafana:
           enabled: true
-          replicas: 1
-          adminPassword: "admin"
-          rbac:
-            pspEnabled: false  # k3s не использует PSP
+          adminPassword: "admin123"
           persistence:
-            enabled: true
-            storageClassName: local-path
-            size: 2Gi
+            enabled: false  # Временно отключим для избежания проблем с PVC
           ingress:
             enabled: true
             ingressClassName: traefik
             hosts:
               - grafana.gentoo.local
 
-        # Prometheus
         prometheus:
           enabled: true
           prometheusSpec:
-            replicas: 1
-            retention: 30d
-            # Важные настройки для k3s
+            retention: 7d
             serviceMonitorSelectorNilUsesHelmValues: false
-            podMonitorSelectorNilUsesHelmValues: false
-            ruleSelectorNilUsesHelmValues: false
-            probeSelectorNilUsesHelmValues: false
             resources:
               requests:
-                memory: 500Mi
+                memory: 400Mi
               limits:
-                memory: 2Gi
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  accessModes: ["ReadWriteOnce"]
-                  storageClassName: local-path
-                  resources:
-                    requests:
-                      storage: 10Gi
+                memory: 1Gi
+            # Временно без persistence
+            storageSpec: {}
           ingress:
             enabled: true
             ingressClassName: traefik
             hosts:
               - prometheus.gentoo.local
 
-        # Prometheus Operator
         prometheusOperator:
+          enabled: true
           admissionWebhooks:
-            enabled: false  # Отключаем для упрощения
+            enabled: false
           tls:
             enabled: false
 
-        # Node Exporter
-        prometheus-node-exporter:
-          fullnameOverride: "node-exporter"
-          prometheus:
-            monitor:
-              enabled: true
+        # Минимальный набор экспортеров
+        nodeExporter:
+          enabled: true
 
-        # Kube State Metrics
         kube-state-metrics:
-          fullnameOverride: "ksm"
-          prometheus:
-            monitor:
-              enabled: true
+          enabled: true
 
-        # Отключаем компоненты control plane для k3s
+        # Отключаем всё остальное
         kubeApiServer:
           enabled: false
         kubeControllerManager:
@@ -104,10 +78,6 @@ spec:
         kubeProxy:
           enabled: false
         kubeEtcd:
-          enabled: false
-
-        # Отключаем CoreDNS monitoring (k3s использует свой)
-        coreDns:
           enabled: false
   destination:
     server: https://kubernetes.default.svc
@@ -119,5 +89,10 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      - Replace=true # Важно для RBAC
-  revisionHistoryLimit: 3
+      - Replace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

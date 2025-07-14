@@ -1,6 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  # Используем ваше имя
   name: apps-controller
   namespace: argocd
 spec:
@@ -8,10 +9,18 @@ spec:
   source:
     repoURL: https://github.com/bulbasaur1k/k3s-homelab-config.git
     targetRevision: HEAD
-    path: apps
+    # --- ИЗМЕНЕНИЕ: Смотрим на весь репозиторий ---
+    path: .
+    # Включаем рекурсивный поиск, чтобы найти YAML во всех подпапках
+    directory:
+      recurse: true
+
+  # Указываем, что приложения и ресурсы по умолчанию должны создаваться в argocd
+  # Argo CD сам разберется с кластерными ролями и приложениями с другими неймспейсами
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
+
   syncPolicy:
     automated:
       prune: true
