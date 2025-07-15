@@ -1,0 +1,26 @@
+# apps/media-torrserver.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: media-torrserver
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # Ваш репозиторий
+    repoURL: https://github.com/bulbasaur1k/k3s-homelab-config.git
+    targetRevision: HEAD
+    # Путь к манифестам, которые мы только что создали
+    path: services/torrserver
+  destination:
+    server: https://kubernetes.default.svc
+    # Целевой namespace для развертывания
+    namespace: media
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

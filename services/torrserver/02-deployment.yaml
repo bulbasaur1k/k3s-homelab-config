@@ -1,0 +1,32 @@
+# services/torrserver/02-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: torrserver
+  namespace: media
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: torrserver
+  template:
+    metadata:
+      labels:
+        app: torrserver
+    spec:
+      containers:
+        - name: torrserver
+          image: sergepost/torrserver:MatriX.128 # Популярная и стабильная версия
+          ports:
+            - containerPort: 8090
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: temp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: torrserver-data-pvc
+        - name: temp
+          emptyDir: {}

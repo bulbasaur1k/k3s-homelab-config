@@ -1,0 +1,16 @@
+# services/torrserver/03-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: torrserver
+  namespace: media
+spec:
+  selector:
+    app: torrserver
+  ports:
+    - protocol: TCP
+      # Внешний порт сервиса
+      port: 80
+      # Порт, на котором слушает контейнер
+      targetPort: 8090
+  type: ClusterIP

@@ -1,0 +1,14 @@
+# services/torrserver/01-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: torrserver-data-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # Используем стандартный storageClass для k3s
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi
