@@ -16,7 +16,9 @@ spec:
     spec:
       containers:
         - name: torrserver
-          image: sergepost/torrserver:MatriX.128 # Популярная и стабильная версия
+          # <<< ИЗМЕНЕНИЕ ЗДЕСЬ >>>
+          # Меняем на рабочий и поддерживаемый образ
+          image: yourok/torrserver
           ports:
             - containerPort: 8090
           volumeMounts:
