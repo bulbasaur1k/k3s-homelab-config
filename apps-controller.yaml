@@ -9,17 +9,10 @@ spec:
   source:
     repoURL: https://github.com/bulbasaur1k/k3s-homelab-config.git
     targetRevision: HEAD
-    # --- ТО, ЧТО Я ЗАБЫЛ ---
-    path: .
-    directory:
-      recurse: true
-
+    path: apps # Изменено с . на apps чтобы избежать дублирования
   destination:
     server: https://kubernetes.default.svc
-    # Неймспейс по умолчанию для найденных ресурсов.
-    # Argo CD сам разберется, куда что применять.
     namespace: argocd
-
   syncPolicy:
     automated:
       prune: true

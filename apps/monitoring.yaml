@@ -1,11 +1,11 @@
-# apps/monitoring.yaml
+# apps/monitoring.yaml - обновляем домены
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: kube-prometheus-stack
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "10" # Применяется после RBAC
+    argocd.argoproj.io/sync-wave: "10"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -15,12 +15,10 @@ spec:
     chart: kube-prometheus-stack
     targetRevision: 75.10.0
     helm:
-      # Добавьте skipCrds для первой установки
       skipCrds: false
       values: |
-        # Простая конфигурация для начала
         defaultRules:
-          create: false  # Отключим правила для упрощения
+          create: false
 
         alertmanager:
           enabled: false
@@ -29,12 +27,13 @@ spec:
           enabled: true
           adminPassword: "admin123"
           persistence:
-            enabled: false  # Временно отключим для избежания проблем с PVC
+            enabled: false
           ingress:
             enabled: true
             ingressClassName: traefik
             hosts:
-              - grafana.gentoo.local
+              - grafana.home.lan
+              - grafana.192-168-88-12.nip.io
 
         prometheus:
           enabled: true
@@ -46,13 +45,13 @@ spec:
                 memory: 400Mi
               limits:
                 memory: 1Gi
-            # Временно без persistence
             storageSpec: {}
           ingress:
             enabled: true
             ingressClassName: traefik
             hosts:
-              - prometheus.gentoo.local
+              - prometheus.home.lan
+              - prometheus.192-168-88-12.nip.io
 
         prometheusOperator:
           enabled: true
@@ -61,14 +60,12 @@ spec:
           tls:
             enabled: false
 
-        # Минимальный набор экспортеров
         nodeExporter:
           enabled: true
 
         kube-state-metrics:
           enabled: true
 
-        # Отключаем всё остальное
         kubeApiServer:
           enabled: false
         kubeControllerManager:

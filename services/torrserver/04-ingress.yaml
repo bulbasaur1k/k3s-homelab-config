@@ -4,11 +4,25 @@ kind: Ingress
 metadata:
   name: torrserver-ingress
   namespace: media
+  annotations:
+    # Добавляем аннотации для лучшей совместимости
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
-  # Указываем Traefik как Ingress-контроллер
   ingressClassName: traefik
   rules:
-    - host: torr.gentoo.local
+    # Основной домен - используем .home.lan вместо .local
+    - host: torr.home.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: torrserver
+                port:
+                  number: 80
+    # Альтернативный домен через nip.io для совместимости с TV
+    - host: torr.192-168-88-12.nip.io
       http:
         paths:
           - path: /
