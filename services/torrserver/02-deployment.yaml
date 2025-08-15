@@ -16,16 +16,59 @@ spec:
     spec:
       containers:
         - name: torrserver
-          # <<< ИЗМЕНЕНИЕ ЗДЕСЬ >>>
-          # Меняем на рабочий и поддерживаемый образ
-          image: yourok/torrserver
+          image: yourok/torrserver:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8090
+              name: http
+          env:
+            - name: TS_PATH
+              value: "/"
           volumeMounts:
             - name: data
               mountPath: /data
             - name: temp
               mountPath: /tmp
+          # Переопределяем команду для исправления проблемы с путями
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - |
+              # Сначала выполняем оригинальный start.sh чтобы скачать бинарник
+              /start.sh &
+              sleep 5
+              # Убиваем процесс, который не смог запуститься
+              pkill -f start.sh || true
+
+              # Ищем где находится бинарник
+              BINARY=$(find / -name "TorrServer-linux-amd64" -type f 2>/dev/null | head -1)
+
+              if [ -n "$BINARY" ]; then
+                echo "Found TorrServer at: $BINARY"
+                chmod +x "$BINARY"
+                # Запускаем с правильными параметрами
+                exec "$BINARY" --path "${TS_PATH:-/}" \
+                  --logpath "${TS_LOGPATHDIR:-/}" \
+                  --weblog "${TS_WEBLOGFILE:-}" \
+                  --rdb "${TS_RDB:-}" \
+                  --httpauth "${TS_HTTPAUTH:-}" \
+                  --dontkill "${TS_DONTKILL:-}" \
+                  --torrentsdir "${TS_TORRENTSDIR:-}" \
+                  --torrentaddr "${TS_TORRENTADDR:-}" \
+                  --pubipv4 "${TS_PUBIPV4:-}" \
+                  --pubipv6 "${TS_PUBIPV6:-}" \
+                  --searchwa "${TS_SEARCHWA:-}"
+              else
+                echo "ERROR: TorrServer binary not found!"
+                exit 1
+              fi
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
       volumes:
         - name: data
           persistentVolumeClaim:
