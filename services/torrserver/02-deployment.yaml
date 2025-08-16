@@ -16,19 +16,14 @@ spec:
     spec:
       containers:
         - name: torrserver
-          # <<< ИЗМЕНЕНИЕ ЗДЕСЬ >>>
-          # Меняем на рабочий и поддерживаемый образ
-          image: yourok/torrserver
+          # Официальный образ от YouROK
+          image: ghcr.io/yourok/torrserver:latest
           ports:
             - containerPort: 8090
           volumeMounts:
             - name: data
-              mountPath: /data
-            - name: temp
-              mountPath: /tmp
+              mountPath: /opt/ts
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: torrserver-data-pvc
-        - name: temp
-          emptyDir: {}
